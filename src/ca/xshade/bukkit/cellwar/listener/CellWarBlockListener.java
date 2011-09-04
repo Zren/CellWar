@@ -10,7 +10,6 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import ca.xshade.bukkit.cellwar.Cell;
 import ca.xshade.bukkit.cellwar.CellUnderAttack;
 import ca.xshade.bukkit.cellwar.CellWar;
-import ca.xshade.bukkit.cellwar.CellWarConfig;
 import ca.xshade.bukkit.cellwar.event.CellAttackEvent;
 
 public class CellWarBlockListener extends BlockListener {
@@ -19,7 +18,10 @@ public class CellWarBlockListener extends BlockListener {
 	public CellWarBlockListener(CellWar plugin) {
 		this.plugin = plugin;
 	}
-
+	
+	/**
+	 * For Testing purposes only.
+	 */
 	@Override
 	public void onBlockPlace(BlockPlaceEvent event) {
 		Player player = event.getPlayer();
@@ -28,11 +30,15 @@ public class CellWarBlockListener extends BlockListener {
 		if (block == null)
 			return;
 		
-		if (block.getType() == Material.WOOL) {
+		if (block.getType() == Material.FENCE) {
 			int topY = block.getWorld().getHighestBlockYAt(block.getX(), block.getZ()) - 1;
 			if (block.getY() >= topY) {
 				CellAttackEvent cellAttackEvent = new CellAttackEvent(player, block);
 				this.plugin.getServer().getPluginManager().callEvent(cellAttackEvent);
+				if (cellAttackEvent.isCancelled()) {
+					event.setBuild(false);
+					event.setCancelled(true);
+				}
 			}
 		}
 	}
@@ -51,11 +57,11 @@ public class CellWarBlockListener extends BlockListener {
 					event.setCancelled(true);
 				}
 			}
-		} else if (CellWarConfig.isDrawingBeacon() && block.getType() == Material.GLOWSTONE) {
+		} else if ((block.getType() == Material.GLOWSTONE || block.getType() == Material.FENCE)) {
 			Cell cell = Cell.parse(block.getLocation());
 			if (cell.isUnderAttack()) {
 				CellUnderAttack cellAttackData = cell.getAttackData();
-				if (cellAttackData.isPartOfBeacon(block)) {
+				if (cellAttackData.isUneditableBlock(block)) {
 					event.setCancelled(true);
 				}
 			}

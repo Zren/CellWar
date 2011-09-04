@@ -1,13 +1,12 @@
 package ca.xshade.bukkit.cellwar.listener;
 
+import org.bukkit.entity.Player;
 import org.bukkit.event.CustomEventListener;
 import org.bukkit.event.Event;
 
 import ca.xshade.bukkit.cellwar.CellUnderAttack;
 import ca.xshade.bukkit.cellwar.CellWar;
 import ca.xshade.bukkit.cellwar.event.CellAttackEvent;
-import ca.xshade.bukkit.cellwar.event.CellDefendedEvent;
-import ca.xshade.bukkit.cellwar.event.CellWonEvent;
 
 public class CellWarCustomListener extends CustomEventListener {
 	private CellWar plugin;
@@ -23,19 +22,28 @@ public class CellWarCustomListener extends CustomEventListener {
 			try {
 				CellUnderAttack cell = cellAttackEvent.getData();
 				CellWar.registerAttack(cell);
-				plugin.getServer().broadcastMessage(String.format("%s is under attack by %s.", cell.getCellString(), cell.getNameOfFlagOwner()));
+				Player player = cellAttackEvent.getPlayer();
+				//plugin.getServer().broadcastMessage(String.format("%s is under attack by %s.", cell.getCellString(), player.getDisplayName()));
 			} catch (Exception e) {
-				cellAttackEvent.getPlayer().sendMessage(e.getMessage());
+				cellAttackEvent.setException(e);
+				//cellAttackEvent.getPlayer().sendMessage(e.getMessage());
 			}
-		} else if (event.getEventName().equals("CellDefended")) {
+		}
+		/*
+		 * Examples
+		 * 
+		if (event.getEventName().equals("CellDefended")) {
 			CellDefendedEvent cellDefendedEvent = (CellDefendedEvent)event;
+			Player player = cellDefendedEvent.getPlayer();
 			CellUnderAttack cell = cellDefendedEvent.getCell().getAttackData();
-			plugin.getServer().broadcastMessage(String.format("The attack on %s was defended.", cell.getCellString()));
+			plugin.getServer().broadcastMessage(String.format("%s defended %s.", player.getDisplayName(), cell.getCellString()));
 			cell.cancel();
 		} else if (event.getEventName().equals("CellWon")) {
 			CellWonEvent cellWonEvent = (CellWonEvent)event;
 			CellUnderAttack cell = cellWonEvent.getCellAttackData();
-			plugin.getServer().broadcastMessage(String.format("%s won %s.", cell.getNameOfFlagOwner(), cell.getCellString()));
+			Player player = plugin.getServer().getPlayer(cell.getNameOfFlagOwner());
+			plugin.getServer().broadcastMessage(String.format("%s won %s.", player.getDisplayName(), cell.getCellString()));
 		}
+		*/
 	}
 }

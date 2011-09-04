@@ -12,6 +12,7 @@ public class CellAttackThread extends Thread {
 	@Override
 	public void run() {
 		running = true;
+		cell.drawFlagBase();
 		cell.drawFlag();
 		if (CellWarConfig.isDrawingBeacon())
 			cell.drawBeacon();
@@ -28,6 +29,7 @@ public class CellAttackThread extends Thread {
 			}
 		}
 		cell.destroyFlag();
+		cell.destroyFlagBase();
 		if (CellWarConfig.isDrawingBeacon())
 			cell.destroyBeacon();
 	}

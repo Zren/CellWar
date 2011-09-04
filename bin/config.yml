@@ -1,0 +1,9 @@
+cell_size: 16
+flag_waiting_time: 60
+draw_beacon: true
+beacon_size: 20
+max_active_flags_per_player: 1
+
+lang:
+    cell_already_under_attack: 'This cell is already under attack by %s.'
+    reached_max_active_flags: 'You can''t have more than %d flags at once.'
