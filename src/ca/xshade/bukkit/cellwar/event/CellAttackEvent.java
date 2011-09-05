@@ -44,7 +44,7 @@ public class CellAttackEvent extends Event implements Cancellable {
 		return exception;
 	}
 	
-	public void setException(Throwable exception) {
+	public void setException(Exception exception) {
 		this.exception = exception;
 	}
 	

@@ -12,11 +12,8 @@ public class CellAttackThread extends Thread {
 	@Override
 	public void run() {
 		running = true;
-		cell.drawFlagBase();
 		cell.drawFlag();
-		if (CellWarConfig.isDrawingBeacon())
-			cell.drawBeacon();
-		while (running && !cell.hasEnded()) {
+		while (running) {
 			try {
 				Thread.sleep(CellWarConfig.getTimeBetweenFlagColorChange());
 			} catch (InterruptedException e) {
@@ -24,17 +21,15 @@ public class CellAttackThread extends Thread {
 			}
 			if (running) {
 				cell.changeFlag();
-				if (cell.hasEnded())
+				if (cell.hasEnded()) {
 					CellWar.attackWon(cell);
+					cell.cancel();
+				}
 			}
 		}
-		cell.destroyFlag();
-		cell.destroyFlagBase();
-		if (CellWarConfig.isDrawingBeacon())
-			cell.destroyBeacon();
 	}
 	
-	public void setRunning(boolean running) {
+	protected void setRunning(boolean running) {
 		this.running = running;
 	}
 }

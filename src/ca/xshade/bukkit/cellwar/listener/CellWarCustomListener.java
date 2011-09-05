@@ -1,6 +1,5 @@
 package ca.xshade.bukkit.cellwar.listener;
 
-import org.bukkit.entity.Player;
 import org.bukkit.event.CustomEventListener;
 import org.bukkit.event.Event;
 
@@ -22,7 +21,7 @@ public class CellWarCustomListener extends CustomEventListener {
 			try {
 				CellUnderAttack cell = cellAttackEvent.getData();
 				CellWar.registerAttack(cell);
-				Player player = cellAttackEvent.getPlayer();
+				//Player player = cellAttackEvent.getPlayer();
 				//plugin.getServer().broadcastMessage(String.format("%s is under attack by %s.", cell.getCellString(), player.getDisplayName()));
 			} catch (Exception e) {
 				cellAttackEvent.setException(e);

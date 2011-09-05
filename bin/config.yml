@@ -1,8 +1,12 @@
 cell_size: 16
 flag_waiting_time: 60
 draw_beacon: true
-beacon_size: 20
+beacon_radius: 3
 max_active_flags_per_player: 1
+
+flag_base_block: 'fence'
+flag_light_block: 'torch'
+beacon_wireframe_block: 'glowstone'
 
 lang:
     cell_already_under_attack: 'This cell is already under attack by %s.'

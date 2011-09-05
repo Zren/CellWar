@@ -4,13 +4,14 @@ import java.io.File;
 import java.io.IOException;
 
 import org.bukkit.DyeColor;
+import org.bukkit.Material;
 import org.bukkit.util.config.Configuration;
 
 import ca.xshade.util.JavaUtil;
 
 public class CellWarConfig {
 	public static Configuration config;
-	public static final DyeColor[] woolColor = new DyeColor[] {
+	public static final DyeColor[] woolColors = new DyeColor[] {
 		DyeColor.LIME,
 		DyeColor.GREEN,
 		DyeColor.BLUE,
@@ -22,6 +23,10 @@ public class CellWarConfig {
 		DyeColor.ORANGE,
 		DyeColor.RED
 	};
+	
+	private static Material flagBaseMaterial = null;
+	private static Material flagLightMaterial = null;
+	private static Material beaconWireFrameMaterial = null;
 	
 	public static boolean loadConfig(File file) {
 		if (!(file.exists() && file.isFile())) {
@@ -36,7 +41,22 @@ public class CellWarConfig {
 		config = new Configuration(file);
 		config.load();
 		
+		loadCachedObjects();
+		
 		return true;
+	}
+	
+	public static void loadCachedObjects() {
+		flagBaseMaterial = Material.matchMaterial(config.getString("flag_base_block", "fence"));
+		flagLightMaterial = Material.matchMaterial(config.getString("flag_light_block", "torch"));
+		beaconWireFrameMaterial = Material.matchMaterial(config.getString("beacon_wireframe_block", "glowstone"));
+	}
+	
+	public static boolean isAffectedMaterial(Material material) {
+		return material == Material.WOOL
+			|| material == getFlagBaseMaterial()
+			|| material == getFlagLightMaterial()
+			|| material == getBeaconWireFrameMaterial();
 	}
 	
 	public static String getLangString(String root){
@@ -57,7 +77,7 @@ public class CellWarConfig {
 	}
 	
 	public static DyeColor[] getWoolColors() {
-		return woolColor;
+		return woolColors;
 	}
 	
 	public static long getFlagWaitingTime() {
@@ -71,12 +91,28 @@ public class CellWarConfig {
 	public static boolean isDrawingBeacon() {
 		return config.getBoolean("draw_beacon", true);
 	}
-
-	public static int getBeaconSize() {
-		return config.getInt("beacon_size", 20);
-	}
 	
 	public static int getMaxActiveFlagsPerPerson() {
 		return config.getInt("max_active_flags_per_player", 1);
+	}
+	
+	public static Material getFlagBaseMaterial() {
+		return flagBaseMaterial;
+	}
+	
+	public static Material getFlagLightMaterial() {
+		return flagLightMaterial;
+	}
+	
+	public static Material getBeaconWireFrameMaterial() {
+		return beaconWireFrameMaterial;
+	}
+	
+	public static int getBeaconRadius() {
+		return config.getInt("beacon_radius", 3);
+	}
+	
+	public static int getBeaconSize() {
+		return getBeaconRadius() * 2 - 1;
 	}
 }

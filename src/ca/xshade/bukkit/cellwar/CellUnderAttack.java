@@ -10,8 +10,9 @@ import org.bukkit.block.Block;
 
 public class CellUnderAttack extends Cell {
 	private String nameOfFlagOwner;
-	private List<Block> beaconBlocks = new ArrayList<Block>();
-	private Block flagBaseBlock, flagBlock;
+	private List<Block> beaconFlagBlocks;
+	private List<Block> beaconWireframeBlocks;
+	private Block flagBaseBlock, flagBlock, flagLightBlock;
 	private int flagColorId;
 	private CellAttackThread thread;
 	
@@ -22,24 +23,65 @@ public class CellUnderAttack extends Cell {
 		this.flagColorId = 0;
 		this.thread = new CellAttackThread(this);
 		
-		int x = flagBaseBlock.getX();
-		int z = flagBaseBlock.getZ();
 		World world = flagBaseBlock.getWorld();
+		this.flagBlock = world.getBlockAt(flagBaseBlock.getX(), flagBaseBlock.getY() + 1, flagBaseBlock.getZ());
+		this.flagLightBlock = world.getBlockAt(flagBaseBlock.getX(), flagBaseBlock.getY() + 2, flagBaseBlock.getZ());
+	}
+	
+	public void loadBeacon() {
+		beaconFlagBlocks = new ArrayList<Block>();
+		beaconWireframeBlocks = new ArrayList<Block>();
+		
+		if (!CellWarConfig.isDrawingBeacon())
+			return;
+		
+		int beaconSize = CellWarConfig.getBeaconSize();
+		if (CellWarConfig.getCellSize() < beaconSize)
+			return;
+		
+		Block minBlock = getBeaconMinBlock(getFlagBaseBlock().getWorld());
+		if (flagBaseBlock.getY() + 4 > minBlock.getY())
+			return;
+		
+		int outerEdge = beaconSize - 1;
+		for (int y = 0; y < beaconSize; y++) {
+			for (int z = 0; z < beaconSize; z++) {
+				for (int x = 0; x < beaconSize; x++) {
+					Block block = flagBaseBlock.getWorld().getBlockAt(minBlock.getX() + x, minBlock.getY() + y, minBlock.getZ() + z);
+					if (block.isEmpty()) {
+						int edgeCount = getEdgeCount(x, y, z, outerEdge);
+						if (edgeCount == 1) {
+							beaconFlagBlocks.add(block);
+						} else if (edgeCount > 1) {
+							beaconWireframeBlocks.add(block);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	private int getEdgeCount(int x, int y, int z, int outerEdge) {
+		return (zeroOr(x, outerEdge) ? 1 : 0) + (zeroOr(y, outerEdge) ? 1 : 0) + (zeroOr(z, outerEdge) ? 1 : 0);
+	}
+	
+	private boolean zeroOr(int n, int max) {
+		return n == 0 || n == max;
+	}
+	
+	private Block getBeaconMinBlock(World world) {
+		int middle = (int) Math.floor(CellWarConfig.getCellSize() / 2.0);
+		int radiusCenterExpansion = CellWarConfig.getBeaconRadius() - 1;
+		int fromCorner = middle - radiusCenterExpansion;
 		int maxY = world.getMaxHeight();
 		
-		this.flagBlock = flagBaseBlock.getWorld().getBlockAt(flagBaseBlock.getX(), flagBaseBlock.getY() + 1, flagBaseBlock.getZ());
+		int cellSize = CellWarConfig.getCellSize();
 		
-		if (CellWarConfig.isDrawingBeacon()) {
-			int beaconStartY = world.getMaxHeight() - CellWarConfig.getBeaconSize() - 1;
-			if (beaconStartY <= flagBlock.getY() + 1)
-				beaconStartY = flagBlock.getY() + 2;
-			for (int y = beaconStartY; y < maxY; y++) {
-				beaconBlocks.add(world.getBlockAt(x, y, z));
-			}
-			
-			if (flagBaseBlock.getY() + 1 <= world.getMaxHeight())
-				beaconBlocks.add(world.getBlockAt(x, flagBlock.getY() + 1, z));
-		}
+		int x = (getX() * cellSize) + fromCorner;
+		int y = maxY - CellWarConfig.getBeaconSize();
+		int z = (getZ() * cellSize) + fromCorner;
+		
+		return world.getBlockAt(x, y, z);
 	}
 	
 	public Block getFlagBaseBlock() {
@@ -56,42 +98,40 @@ public class CellUnderAttack extends Cell {
 
 	public void changeFlag() {
 		flagColorId += 1;
-		drawFlag();
-	}
-	
-	public void drawFlagBase() {
-		flagBaseBlock.setType(Material.FENCE);
-	}
-	
-	public void destroyFlagBase() {
-		flagBaseBlock.setType(Material.AIR);
+		updateFlag();
 	}
 	
 	public void drawFlag() {
+		loadBeacon();
+		
+		flagBaseBlock.setType(CellWarConfig.getFlagBaseMaterial());
+		updateFlag();
+		flagLightBlock.setType(CellWarConfig.getFlagLightMaterial());
+		for (Block block : beaconWireframeBlocks)
+			block.setType(CellWarConfig.getBeaconWireFrameMaterial());
+	}
+	
+	public void updateFlag() {
 		DyeColor[] woolColors = CellWarConfig.getWoolColors();
 		if (flagColorId < woolColors.length) {
-			this.flagBlock.setTypeIdAndData(Material.WOOL.getId(), woolColors[flagColorId].getData(), false);
 			//System.out.println(String.format("Flag at %s turned %s.", getCellString(), woolColors[flagColorId].toString()));
+			int woolId = Material.WOOL.getId();
+			byte woolData = woolColors[flagColorId].getData();
+			
+			flagBlock.setTypeIdAndData(woolId, woolData, false);
+			for (Block block : beaconFlagBlocks)
+				block.setTypeIdAndData(woolId, woolData, false);
 		}
 	}
 	
 	public void destroyFlag() {
-		this.flagBlock.setType(Material.AIR);
-		if (CellWarConfig.isDrawingBeacon()) {
-			destroyBeacon();
-		}
-	}
-	
-	public void drawBeacon() {
-		for (Block block : beaconBlocks) {
-			block.setType(Material.GLOWSTONE);
-		}
-	}
-	
-	public void destroyBeacon() {
-		for (Block block : beaconBlocks) {
+		flagLightBlock.setType(Material.AIR);
+		flagBlock.setType(Material.AIR);
+		flagBaseBlock.setType(Material.AIR);
+		for (Block block : beaconFlagBlocks)
 			block.setType(Material.AIR);
-		}
+		for (Block block : beaconWireframeBlocks)
+			block.setType(Material.AIR);
 	}
 	
 	public void begin() {
@@ -100,12 +140,17 @@ public class CellUnderAttack extends Cell {
 	
 	public void cancel() {
 		this.thread.setRunning(false);
+		destroyFlag();
 	}
 
 	public String getCellString() {
 		return String.format("%s (%d, %d)", getWorldName(), getX(), getZ());
 	}
 
+	public boolean isFlagLight(Block block) {
+		return this.flagLightBlock.equals(block);
+	}
+	
 	public boolean isFlag(Block block) {
 		return this.flagBlock.equals(block);
 	}
@@ -115,10 +160,10 @@ public class CellUnderAttack extends Cell {
 	}
 	
 	public boolean isPartOfBeacon(Block block) {
-		return beaconBlocks.contains(block);
+		return beaconFlagBlocks.contains(block) || beaconWireframeBlocks.contains(block);
 	}
 	
 	public boolean isUneditableBlock(Block block) {
-		return isPartOfBeacon(block) || isFlagBase(block);
+		return isPartOfBeacon(block) || isFlagBase(block) || isFlagLight(block);
 	}
 }
